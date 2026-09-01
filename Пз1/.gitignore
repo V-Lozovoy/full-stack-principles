@@ -1,0 +1,9 @@
+# монорепо
+node_modules/
+dist/
+*.local
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
