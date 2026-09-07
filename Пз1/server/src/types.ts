@@ -24,10 +24,11 @@ export type Health = {
 //   Результат: тип експортується звідси, і в Пз2 маршрути CRUD типізуються
 //   ним, а не `any`.
 
-// export type Note = {
-//   id: number
-//   title: string
-//   text: string
-//   latitude: number
-//   longitude: number
-// }
+export type Workout = {
+  id: number
+  title: string
+  description: string
+  duration: number
+  difficulty: number
+  exercises: string[]
+}
