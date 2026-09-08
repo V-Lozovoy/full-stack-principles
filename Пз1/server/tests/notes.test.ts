@@ -2,7 +2,7 @@ import request from 'supertest'
 import { after, it } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { buildApp } from '../src/app.js'
+import { buildApp } from '../../../Пз2/server/src/app.js'
 
 // Один застосунок на весь файл: фабрика buildApp() не займає порт, тому
 // supertest сам піднімає його на вільному порту — сервер запускати не треба.

@@ -1,4 +1,4 @@
-import type { Note } from '../types.js'
+import type { Note } from '../../../../Пз2/server/src/types.js'
 
 /**
  * Сховище Пз2 — звичайний масив у памʼяті процесу.
