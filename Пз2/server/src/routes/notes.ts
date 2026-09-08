@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify'
 import { AppError } from '../lib/errors.js'
 import { store } from '../lib/store.js'
 import { idParamSchema, listQuerySchema } from '../schemas/notes.js'
-import type { Note, Page } from '../../../../Пз2/server/src/types.js'
+import type { Note, Page } from '../types.js'
 
 /**
  * Плагін Fastify — група маршрутів однієї сутності в одному файлі.
