@@ -1,0 +1,12 @@
+# монорепо
+node_modules/
+dist/
+*.local
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+
+# артефакти складання TypeScript
+*.tsbuildinfo
