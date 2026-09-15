@@ -28,3 +28,21 @@ export type Workout = {
   difficulty: number
   exercises: string[]
 }
+
+export type Note = {
+  id: number
+  title: string
+  text: string | null
+  lat: number
+  lng: number
+  tags: string[]
+  createdAt: string
+  visited: boolean
+}
+
+export type Page<T> = {
+  items: T[]
+  total: number
+  page: number
+  limit: number
+}

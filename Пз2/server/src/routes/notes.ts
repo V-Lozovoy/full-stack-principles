@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 
 import { AppError } from '../lib/errors.js'
 import { store } from '../lib/store.js'
-import { idParamSchema, listQuerySchema } from '../schemas/notes.js'
+import { idParamSchema, listQuerySchema, createNoteSchema, updateNoteSchema } from '../schemas/notes.js'
 import type { Note, Page } from '../types.js'
 
 /**
@@ -40,6 +40,25 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
     const note = store.byId(id)
     if (!note) throw new AppError(404, 'Нотатку не знайдено')
     return note
+  })
+
+  app.post('/api/notes', async (req, reply): Promise<Note> => {
+    const data = createNoteSchema.parse(req.body)
+    return reply.code(201).send(store.create(data))
+  })
+
+  app.patch('/api/notes/:id', async (req): Promise<Note> => {
+    const { id } = idParamSchema.parse(req.params)
+    const patch = updateNoteSchema.parse(req.body)
+    const note = store.update(id, patch)
+    if (!note) throw new AppError(404, 'Нотатку не знайдено')
+    return note
+  })
+
+  app.delete('/api/notes/:id', async (req, reply): Promise<void> => {
+    const { id } = idParamSchema.parse(req.params)
+    if (!store.remove(id)) throw new AppError(404, 'Нотатку не знайдено')
+    return reply.code(204).send()
   })
 
   // TODO(2) [Пз2 · Л2, «Fastify: застосунок і плагін маршрутів»]: три маршрути запису.

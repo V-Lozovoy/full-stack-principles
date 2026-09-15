@@ -25,6 +25,16 @@ import { z } from 'zod'
 // Як видно, що не зроблено: TODO(2) у routes/notes.ts посилається на схеми,
 // яких ще немає — поки їх нема, проєкт навіть не скомпілюється.
 
+
+export const createNoteSchema = z.object({
+  title: z.string().min(1, 'Назва обовʼязкова').max(100),
+  text: z.string().max(2000).nullable().default(null),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  tags: z.array(z.string()).default([]),
+})
+
+export const updateNoteSchema = createNoteSchema.partial().extend({ visited: z.boolean().optional() })
 /**
  * Параметри маршруту завжди приходять рядками — '42', а не 42.
  * coerce перетворює рядок на число, а 'abc' відхиляє з 400.
