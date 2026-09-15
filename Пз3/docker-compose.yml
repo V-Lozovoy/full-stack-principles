@@ -1,0 +1,37 @@
+# PostgreSQL для розробки. Піднімається однією командою і нічого не встановлює
+# у систему: docker compose up -d db
+#
+# Немає Docker? Prisma 7 вміє підняти локальний Postgres сама:
+#   npx prisma dev
+# і взяти DATABASE_URL, який вона надрукує. Решта кроків — ті самі.
+
+# Кожна практична — окремий проєкт compose: свої контейнери і свій том,
+# тому сусідні Пз не конфліктують за імена і не ловлять drift на спільній базі.
+name: fullstack-pz3
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: notes
+    ports:
+      # Ліва частина — порт на вашій машині. Зайнятий 5432 (є свій Postgres)?
+      # Змініть на "5433:5432" і поправте порт у DATABASE_URL.
+      - '5432:5432'
+    volumes:
+      # Іменований том: дані переживають docker compose down.
+      # Знищити разом із даними — docker compose down -v.
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Поки перевірка не пройшла, сервіс вважається «не готовим».
+      # На Пз7 через це чекатиме сервер: depends_on + service_healthy.
+      test: ['CMD-SHELL', 'pg_isready -U demo -d notes']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:

@@ -1,0 +1,71 @@
+// Схема — одне джерело правди: з неї народжуються і таблиці в базі,
+// і TypeScript-типи в коді. Змінили схему → міграція → новий клієнт.
+
+generator client {
+  provider = "prisma-client"
+  // Генерований клієнт лежить усередині src, щоб tsc його бачив.
+  // У git не комітиться (див. .gitignore) — відновлюється prisma generate.
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url тут більше немає: з Prisma 7 він задається у prisma.config.ts
+}
+
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+
+  // TODO(1) [Пз4 · Л4, «Паролі: як не треба і як треба»]: два поля до User і нова міграція.
+  //
+  //   password String            — ТІЛЬКИ хеш. Пароля відкритим текстом
+  //                                у базі не буває ніколи: ані «тимчасово»,
+  //                                ані «поки що на локальній».
+  //   role     String @default("user")
+  //                              — роль лежить у базі й потрапляє в токен.
+  //                                Читаємо її ЗАВЖДИ з токена: role у тілі
+  //                                запиту від клієнта не означає нічого.
+  //
+  // Потім: npx prisma migrate dev --name auth
+  //
+  // Як видно, що не зроблено: prisma.user.create падає — немає поля password.
+
+  createdAt DateTime @default(now())
+
+  notes Note[] // 1 : N — зворотний бік звʼязку
+
+  @@map("users")
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(100)
+  text      String?
+  lat       Float
+  lng       Float
+  visited   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // 1 : N — у нотатки один автор. onDelete: Cascade означає, що разом
+  // із користувачем зникнуть і його нотатки, а не лишаться сиротами.
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // N : M — таблицю звʼязку Prisma створить сама (_NoteToTag)
+  tags Tag[]
+
+  // Індекс під найчастіший фільтр: «нотатки цього автора».
+  // Без нього — повний перегляд таблиці на кожен запит.
+  @@index([authorId])
+  @@map("notes")
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  notes Note[]
+
+  @@map("tags")
+}
