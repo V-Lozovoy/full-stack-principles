@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 
 import { prisma } from '../lib/db.js'
-import { listQuerySchema } from '../schemas/notes.js'
+import { listQuerySchema, createNoteSchema, updateNoteSchema, idParamSchema } from '../schemas/notes.js'
+import { AppError } from '../lib/errors.js'
 
 /**
  * Ті самі пʼять маршрутів, що і в Пз2 — але дані тепер із бази.
@@ -36,6 +37,74 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
     return { items, total, page, limit }
   })
 
+  app.get('/api/notes/:id', async (req) => {
+    const { id } = idParamSchema.parse(req.params)
+    const note = await prisma.note.findUnique({ where: { id } })
+    if (!note) throw new AppError(404, 'Нотатку не знайдено')
+    return note
+  })
+
+  app.post('/api/notes', async (req, reply) => {
+    const { tags, ...data } = createNoteSchema.parse(req.body)
+    const author = await prisma.user.findFirst()
+    if (!author) throw new AppError(500, 'Немає користувача. Запустіть npx prisma db seed')
+    
+    const note = await prisma.note.create({
+      data: { 
+        ...data, 
+        authorId: author.id,
+        tags: { connectOrCreate: tags.map((name) => ({
+          where: { name },
+          create: { name },
+      })),
+    },
+  },
+})
+
+  reply.code(201)
+  return note
+})
+
+    app.patch('/api/notes/:id', async (req) => {
+    const { id } = idParamSchema.parse(req.params)
+    const { tags, ...data } = updateNoteSchema.parse(req.body)
+
+    // Перевіряємо існування заздалегідь: без цього Prisma кине P2025
+    // на неіснуючому id, і клієнт отримає 500 замість 404.
+    const existing = await prisma.note.findUnique({
+      where: { id },
+      select: { id: true },
+    })
+    
+    if (!existing) throw new AppError(404, 'Нотатку не знайдено')
+
+    const note = await prisma.note.update({
+      where: { id },
+      data: { ...data, ...(tags && {
+        tags: {
+          set: [],
+          connectOrCreate: tags.map((name) => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+      }),
+    },
+  })
+  
+  return note
+})
+
+  app.delete('/api/notes/:id', async (req, reply) => {
+    const { id } = idParamSchema.parse(req.params)
+    const existing = await prisma.note.findUnique({ where: { id }, select: { id: true } })
+    
+    if (!existing) throw new AppError(404, 'Нотатку не знайдено')
+
+    await prisma.note.delete({ where: { id } })
+    reply.code(204)
+})
+
   // TODO(2) [Пз3 · Л3, «Prisma Client» і «Список із бази»]: перевести решту маршрутів на Prisma.
   //
   // Результат: усі вісім перевірок npm test знову зелені, а дані
@@ -61,5 +130,4 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
   //     tags: { connectOrCreate: [...] } — одним запитом.
   //
   // Як видно, що не зроблено: POST повертає 404, бо маршруту ще немає.
-  void prisma
 }

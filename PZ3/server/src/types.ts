@@ -6,7 +6,7 @@
 
 // Типи сутностей більше не пишемо руками — Prisma генерує їх зі схеми.
 // Додасте User і Tag у TODO(1) — допишіть їх сюди ж.
-export type { Note } from './generated/prisma/client.js'
+export type { Note, User } from './generated/prisma/client.js'
 
 /** Відповідь GET /api/health. */
 export type Health = {

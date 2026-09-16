@@ -14,22 +14,37 @@
 //
 // Каркас:
 //
-//   import { PrismaPg } from '@prisma/adapter-pg'
-//   import { PrismaClient } from '../src/generated/prisma/client.js'
-//
-//   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
-//   const prisma = new PrismaClient({ adapter })
-//
-//   async function main() {
-//     // upsert, а не create: seed має переживати повторний запуск
-//     // і не падати на унікальному полі.
-//     ...
-//   }
-//
-//   main()
-//     .catch((err) => { console.error(err); process.exit(1) })
-//     .finally(() => prisma.$disconnect())
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from '../src/generated/prisma/client.js'
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
+const prisma = new PrismaClient({ adapter })
+
+async function main() {
+    // upsert, а не create: seed має переживати повторний запуск
+    // і не падати на унікальному полі.
+    const demoUser = await prisma.user.upsert({
+        where: { email: 'demo@example.com' },
+        update: {},
+        create: { email: 'demo@example.com' },
+})
+
+const notes = [
+    { title: 'Перший запис', lat: 48.4647, lng: 35.0462 },
+    { title: 'Другий запис', lat: 48.4648, lng: 35.0463 },
+]
+
+for (const note of notes) {
+    const existing = await prisma.note.findFirst({ where: { title: note.title } })
+    if (!existing) {
+        await prisma.note.create({
+            data: { ...note, authorId: demoUser.id },
+        })
+    }
+}}
+
+main()
+    .catch((err) => { console.error(err); process.exit(1) })
+    .finally(() => prisma.$disconnect())
 //
 // Демо-дані комітяться в git. Справжні дані користувачів — ніколи.
-
-export {}
