@@ -1,0 +1,55 @@
+:root {
+  --ink: #1c2128;
+  --muted: #5f6773;
+  --line: #dad5c9;
+  --bg: #f7f5f0;
+  --accent: #0f8b6e;
+  --danger: #b3402f;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); }
+
+.app { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+.header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+h1 { font-size: 24px; }
+
+.list { display: grid; gap: 12px; }
+.card {
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; display: grid; gap: 8px;
+}
+.card h3 { margin: 0; font-size: 17px; }
+.card p { margin: 0; }
+.meta { color: var(--muted); font-size: 13px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.form { max-width: 380px; }
+.form label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+input {
+  padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
+  font: inherit; background: #fff;
+}
+input[aria-invalid='true'] { border-color: var(--danger); }
+
+button {
+  padding: 9px 14px; border: 1px solid var(--accent); border-radius: 8px;
+  background: var(--accent); color: #fff; font: inherit; cursor: pointer;
+}
+button:disabled { opacity: 0.55; cursor: progress; }
+button.danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+button.link {
+  background: none; border: none; color: var(--accent);
+  padding: 0; text-decoration: underline; width: fit-content;
+}
+
+.error { color: var(--danger); }
+.field-error { color: var(--danger); font-size: 13px; }
+
+
+/* Мапа (Л6): Leaflet рахує розміри сам, тому контейнеру потрібна ЯВНА
+   висота - без неї мапа має нуль пікселів, і це виглядає як "мапи немає". */
+.map { height: calc(100vh - 220px); }
+.map-canvas { height: 100%; border-radius: 10px; z-index: 0; }
