@@ -9,6 +9,7 @@ import {
   updateNoteSchema,
 } from '../schemas/notes.js'
 import { AuthUser } from '../schemas/auth.js'
+import { ownedWhere } from '../plugins/auth.js'
 
 /**
  * Ті самі пʼять маршрутів, що і в Пз2. Порівняйте файли поруч: змінилося
@@ -20,11 +21,10 @@ import { AuthUser } from '../schemas/auth.js'
  */
 export async function notesRoutes(app: FastifyInstance): Promise<void> {
   // TODO(5) [Пз4 · Л4, «Авторизація у routes/notes.ts: автор і роль»]: закрити маршрути і зробити дані «своїми».
-  //
-  //   1. app.addHook('preHandler', app.authenticate)
   //      Один хук на весь плагін — надійніше, ніж не забути його у пʼяти
   //      маршрутах. Усе нижче стає доступним лише з токеном.
-  //
+  app.addHook('preHandler', app.authenticate)
+
   //   2. POST: authorId береться з (req.user as AuthUser).id, а НЕ з тіла
   //      запиту. Інакше будь-хто створить запис від чужого імені, надіславши
   //      чужий id. Функція demoAuthorId нижче після цього не потрібна.
@@ -37,18 +37,7 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
   //
   // Як видно, що не зроблено: npm run check:auth падає на пунктах 6 і 9 —
   // список відкритий без токена, і Боб спокійно видаляє нотатку Аліси.
-
-  // Тимчасово, доки немає автентифікації: усі записи належать одному
-  // демонстраційному користувачу. Після TODO(5) ця функція зникає.
-  async function demoAuthorId(): Promise<number> {
-    const user = await prisma.user.upsert({
-      where: { email: 'demo@example.com' },
-      update: {},
-      create: { email: 'demo@example.com' },
-    })
-    return user.id
-  }
-
+  
   // Усе нижче — лише з токеном. Один хук на весь плагін замість того,
   // щоб не забути дописати його в пʼяти маршрутах.
   // app.addHook('preHandler', app.authenticate)
@@ -95,8 +84,10 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/api/notes/:id', async (req) => {
     const { id } = idParamSchema.parse(req.params)
+    const user = req.user as AuthUser
+    
     const note = await prisma.note.findUnique({
-      where: { id },
+      where: ownedWhere(user, id),
       include: { tags: true },
     })
     if (!note) throw new AppError(404, 'Нотатку не знайдено')
@@ -105,11 +96,12 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/api/notes', async (req, reply) => {
     const { tags, ...data } = createNoteSchema.parse(req.body)
+    const user = req.user as AuthUser
 
     const note = await prisma.note.create({
       data: {
         ...data,
-        authorId: await demoAuthorId(),
+        authorId: user.id,
         // connectOrCreate: існуючий тег підключаємо, новий — створюємо.
         // Одним запитом, без «спершу знайди, потім встав».
         tags: {
@@ -128,10 +120,11 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
   app.patch('/api/notes/:id', async (req) => {
     const { id } = idParamSchema.parse(req.params)
     const { tags, ...patch } = updateNoteSchema.parse(req.body)
+    const user = req.user as AuthUser
 
     // Prisma кидає P2025, якщо оновлювати нема чого. Ловимо і перекладаємо
     // у наш 404 — інакше клієнт отримає 500 і незрозумілий текст.
-    const exists = await prisma.note.findUnique({ where: { id }, select: { id: true } })
+    const exists = await prisma.note.findFirst({ where: ownedWhere(user, id), select: { id: true }, })
     if (!exists) throw new AppError(404, 'Нотатку не знайдено')
 
     return prisma.note.update({
@@ -157,8 +150,9 @@ export async function notesRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete('/api/notes/:id', async (req, reply) => {
     const { id } = idParamSchema.parse(req.params)
+    const user = req.user as AuthUser
 
-    const exists = await prisma.note.findUnique({ where: { id }, select: { id: true } })
+    const exists = await prisma.note.findFirst({ where: ownedWhere(user, id), select: { id: true }, })
     if (!exists) throw new AppError(404, 'Нотатку не знайдено')
 
     await prisma.note.delete({ where: { id } })

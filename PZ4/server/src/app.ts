@@ -39,11 +39,11 @@ export function buildApp(): FastifyInstance {
   //
   // Як видно, що не зроблено: сервер падає на app.jwt.sign — плагіна немає.
 
-  // app.register(jwt, {
-  //   secret: ,
-  //   sign: ,
-  // })
-  // app.decorate('authenticate', authenticate)
+  app.register(jwt, {
+    secret: process.env.JWT_SECRET ?? 'dev-secret-...',
+    sign: { expiresIn: process.env.JWT_EXPIRES_IN ?? '1h' },
+  })
+  app.decorate('authenticate', authenticate)
 
   app.get('/api/health', async (): Promise<Health> => ({
     status: 'ok',

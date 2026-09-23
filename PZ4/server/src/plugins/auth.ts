@@ -30,15 +30,24 @@ import type { AuthUser } from '../schemas/auth.js'
 //
 // Як видно, що не зроблено: npm run check:auth падає на пунктах 6 і 9.
 
-export async function authenticate(_req: FastifyRequest, _reply: FastifyReply) {
+export async function authenticate(req: FastifyRequest, reply: FastifyReply) {
   // сюди — jwtVerify і 401
+  try {
+    await req.jwtVerify()
+  } catch {
+    return reply.code(401).send({ error: 'Потрібна автентифікація' })
+  }
 }
 
-export async function requireAdmin(_req: FastifyRequest, _reply: FastifyReply) {
+export async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
   // сюди — перевірка ролі і 403
+  const user = req.user as AuthUser | undefined
+  if (!user || user.role !== 'admin') {
+    return reply.code(403).send({ error: 'Потрібні права адміністратора' })
+  }
 }
 
-export function ownedWhere(_user: AuthUser, id: number) {
+export function ownedWhere(user: AuthUser, id: number) {
   // (частина TODO(3)) адмін бачить усе, решта — лише своє
-  return { id }
+  return user.role === 'admin' ? { id } : { id, authorId: user.id }
 }

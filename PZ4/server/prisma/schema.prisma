@@ -16,17 +16,10 @@ datasource db {
 model User {
   id    Int    @id @default(autoincrement())
   email String @unique
-
-  // TODO(1) [Пз4 · Л4, «Паролі: як не треба і як треба»]: два поля до User і нова міграція.
-  //
-  //   password String            — ТІЛЬКИ хеш. Пароля відкритим текстом
-  //                                у базі не буває ніколи: ані «тимчасово»,
-  //                                ані «поки що на локальній».
-  //   role     String @default("user")
-  //                              — роль лежить у базі й потрапляє в токен.
-  //                                Читаємо її ЗАВЖДИ з токена: role у тілі
-  //                                запиту від клієнта не означає нічого.
-  //
+  
+  password String            
+  role     String @default("user")                         
+  
   // Потім: npx prisma migrate dev --name auth
   //
   // Як видно, що не зроблено: prisma.user.create падає — немає поля password.
