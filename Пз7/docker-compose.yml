@@ -1,0 +1,59 @@
+# TODO(5) [Пз7 · Л7, слайди «docker-compose.yml: три сервіси» і «Compose-стек»]:
+# база і сервер у двох контейнерах. На слайді є й третій сервіс — клієнт
+# у nginx, але тут він не потрібен: клієнт працює через npm run dev,
+# як і раніше.
+#
+# Результат: docker compose up --build піднімає db і server, а npm run check
+# стукає в API на localhost:3000, як завжди.
+#
+name: fullstack-pz7
+
+services:
+  db:
+    # Готово — як у Пз6: та сама база, healthcheck і том.
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: notes
+    ports:
+      # Ліва частина — порт на вашій машині. Зайнятий 5432 (є свій Postgres)?
+      # Змініть на "5433:5432" і поправте порт у DATABASE_URL.
+      - '5432:5432'
+    volumes:
+      # Іменований том: дані переживають docker compose down.
+      # Знищити разом із даними — docker compose down -v.
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Поки перевірка не пройшла, сервіс вважається «не готовим» —
+      # саме цього чекатиме сервер: depends_on + service_healthy.
+      test: ['CMD-SHELL', 'pg_isready -U demo -d notes']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # TODO: server — приблизно десять рядків:
+  #   build: ./server
+  #   environment:
+  #     DATABASE_URL: postgresql://demo:demo@db:5432/notes?schema=public
+  #                   ↑ хост — db, імʼя сервісу. НЕ localhost:
+  #                     localhost усередині контейнера — це він сам.
+  #     JWT_SECRET: ${JWT_SECRET:-dev-secret}
+  #                   ↑ секрет приходить ЗЗОВНІ, не з Dockerfile
+  #   ports: ['3000:3000']
+  #                   ↑ сюди стукають і npm run check, і дев-проксі Vite;
+  #                     без цього рядка клієнт у деві не побачить API
+  #   depends_on:
+  #     db: { condition: service_healthy }
+  #                   ↑ саме condition, а не просто список: інакше
+  #                     сервер почне міграції раніше, ніж Postgres
+  #                     готовий приймати зʼєднання
+  #
+  # Перед першим запуском зупиніть базу з Пз6 — порт 5432 спільний:
+  #   docker compose -f ../ПЗ6/docker-compose.yml down
+  #
+  # Як видно, що не зроблено: docker compose up --build піднімає тільки db.
+
+volumes:
+  db-data:

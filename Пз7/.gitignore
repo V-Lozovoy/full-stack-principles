@@ -1,0 +1,17 @@
+# монорепо
+node_modules/
+dist/
+*.local
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Пз3: локальні налаштування і згенерований клієнт Prisma
+.env
+*/.env
+**/src/generated/
+
+# артефакти складання TypeScript
+*.tsbuildinfo

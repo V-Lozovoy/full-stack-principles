@@ -1,0 +1,29 @@
+# TODO(1–3) [Пз7 · Л7, слайди «ci.yml: перша job — lint», «третя job — клієнт»,
+# «job з базою — контрактні перевірки»]: пайплайн із трьома job, який
+# перевіряє кожен пуш.
+#
+#   lint:    npm ci && npm run lint у server/
+#            Окремою job: падає за секунди і не чекає на базу.
+#            Зразок — у README, крок 1.
+#
+#   client:  npm ci && npm run build у client/
+#            Пишеться саме за зразком lint — змінюються working-directory,
+#            cache-dependency-path і остання команда. Крок 2.
+#
+#   check:   контрактні перевірки з Л2 і Л4 проти реальної бази.
+#            Повний текст job — у README, крок 3: перенесіть його і
+#            пройдіться по коментарях:
+#              services: postgres:16-alpine, options: --health-cmd pg_isready
+#              env: DATABASE_URL із хостом localhost — тут це не мережа
+#                   compose, а одна віртуальна машина раннера
+#              node dist/index.js &  →  npx wait-on .../api/health
+#              npm run check && npm run check:auth
+#
+# Секрети проду — у GitHub Secrets (Settings → Secrets and variables →
+# Actions), а не у файлі. Значення в цьому workflow — лише для тимчасової
+# бази пайплайна, вона живе кілька хвилин і зникає.
+#
+# Червоний пайплайн — незакрита підзадача. Це вся дисципліна CI одним
+# реченням.
+#
+# Як видно, що не зроблено: на вкладці Actions порожньо.

@@ -1,0 +1,8 @@
+# Молодший брат .gitignore. Без нього node_modules з вашого ноутбука
+# їдуть у демон Docker як контекст збірки — і збірка повзе.
+node_modules
+dist
+src/generated
+.env
+*.log
+.DS_Store
