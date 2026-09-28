@@ -1,3 +1,6 @@
+import { useState, type SubmitEvent } from 'react'
+import { api, ApiError, setToken } from '../api/client'
+
 interface Props {
   onSuccess: () => void
 }
@@ -24,6 +27,83 @@ interface Props {
 //
 // Як видно, що не зроблено: увійти неможливо.
 
-export default function LoginPage(_props: Props) {
-  return <form className="card form">TODO(3): форма входу</form>
+type Mode = 'login' | 'register'
+
+export default function LoginPage({ onSuccess }: Props) {
+  const [mode, setMode] = useState<Mode>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    setFieldErrors({})
+
+    const body = JSON.stringify({ email, password })
+
+    try {
+      if (mode === 'register') {
+        await api('/auth/register', { method: 'POST', body })
+      }
+
+      const { token } = await api<{ token: string }>('/auth/login', { method: 'POST', body })
+      setToken(token)
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не вдалося виконати запит')
+      setFieldErrors(err instanceof ApiError ? err.fieldErrors() : {})
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function switchMode() {
+    setMode(mode === 'login' ? 'register' : 'login')
+    setError(null)
+    setFieldErrors({})
+  }
+
+  return (
+    <form className="card form" onSubmit={handleSubmit}>
+      <h2>{mode == 'login' ? 'Вхід' : 'Реєстрація'}</h2>
+
+      <label>
+        Email
+        <input type="email" value={email} 
+        onChange={(e) => setEmail(e.target.value)} 
+        autoComplete="email" 
+        required
+        aria-invalid={Boolean(fieldErrors.email)}
+        />
+        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+      </label>
+
+      <label>
+        Пароль
+        <input type="password" value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+        required
+        aria-invalid={Boolean(fieldErrors.password)}
+        />
+        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+      </label>
+
+      {error && (
+        <p className="error" role="alert">{error}</p>
+      )}
+
+      <button type="submit" disabled={busy}>
+        {busy ? 'Зачекайте...' : mode === 'login' ? 'Увійти' : 'Зареєструватися'}
+      </button>
+
+      <button type="button" className='link' onClick={switchMode} disabled={busy}>
+        {mode === 'login' ? 'Немає аккаунта? Зареєструватися' : 'Вже є аккаунт? Увійти'}
+      </button>
+    </form>
+  )
 }

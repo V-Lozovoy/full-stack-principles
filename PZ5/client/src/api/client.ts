@@ -58,6 +58,44 @@ export class ApiError extends Error {
 //
 // Як видно, що не зроблено: жоден екран не показує даних.
 
-export async function api<T>(_path: string, _options: RequestInit = {}): Promise<T> {
-  throw new Error('TODO(1): напишіть обгортку над fetch')
+function isFieldError(x: unknown): x is FieldError {
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    typeof (x as FieldError).field === 'string' &&
+    typeof (x as FieldError).message === 'string'
+  )
+}
+
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken()
+  const headers = new Headers(options.headers)
+
+  if (options.body != null) headers.set('Content-Type', 'application/json')
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  
+  const res = await fetch(`/api${path}`, { ...options, headers })
+
+  if (!res.ok) {
+    let message = `Помилка ${res.status}`
+    let details: FieldError[] = []
+
+    try {
+      const data: unknown = await res.json()
+      if (data && typeof data === 'object') {
+        const { error, details: raw } = data as { error?: unknown; details?: unknown }
+        if (typeof error === 'string') message = error
+        if (Array.isArray(raw)) details = raw.filter(isFieldError)
+      }
+    } catch {
+    }
+    if (res.status === 401 && token) {
+      setToken(null)
+      window.location.assign('/login')
+    }
+    throw new ApiError(res.status, message, details)
+  }
+  
+  if (res.status === 204) return undefined as T
+  return (await res.json()) as T
 }

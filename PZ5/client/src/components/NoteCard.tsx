@@ -24,6 +24,22 @@ interface Props {
 //
 // Як видно, що не зроблено: список порожній, хоча дані з сервера прийшли.
 
-export default function NoteCard(_props: Props) {
-  return <article className="card">TODO(2): картка запису</article>
+export default function NoteCard({ note, onVisit, onDelete, busy = false }: Props) {
+  const tags = note.tags?.map((tag) => `#${tag.name}`).join(' ')
+
+  return (
+    <article className="card">
+      <h3>{note.title}</h3>
+      <p className="meta">
+        {note.lat}, {note.lng} {tags ? ` ${tags}` : ''}
+      </p>
+      {note.text && <p>{note.text}</p>}
+      <div className="row">
+        <button type="button" onClick={() => onVisit(note)} disabled={busy}>
+          {note.visited ? 'Відвідано' : 'Відзначити відвіданим'}
+        </button>
+        <button type="button" className="danger" onClick={() => onDelete(note)} disabled={busy}>Видалити</button>
+      </div>
+    </article>
+  )
 }
