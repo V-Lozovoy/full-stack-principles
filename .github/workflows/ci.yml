@@ -33,15 +33,17 @@ name: CI
 on:
   push:
     branches: [main]
+    paths: ['PZ7/**', '.github/workflows/ci.yml']
   pull_request:
+    paths: ['PZ7/**', '.github/workflows/ci.yml']
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-
+  
     defaults:
       run:
-        working-directory: server
+        working-directory: PZ7/server
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +52,26 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: PZ7/server/package-lock.json
 
+      - run: npm ci
+      - run: npm run lint
+  
+  client:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: PZ7/client
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:  
+          node-version: 24
+          cache: npm
+          cache-dependency-path: PZ7/server/package-lock.json
+    
       - run: npm ci
       - run: npm run lint
