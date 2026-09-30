@@ -74,4 +74,4 @@ jobs:
           cache-dependency-path: PZ7/server/package-lock.json
     
       - run: npm ci
-      - run: npm run lint
+      - run: npm run build
