@@ -27,3 +27,19 @@
 # вихідників) тут не потрібен: без нього образ більший, але робочий.
 #
 # Як видно, що не зроблено: docker compose up --build падає на збірці server.
+
+FROM node:24-alpine
+WORKDIR /app
+
+COPY package.json package-lock.json
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npx prisma generate && npm run build
+EXPOSE 3000
+
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
