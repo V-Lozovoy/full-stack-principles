@@ -17,6 +17,10 @@
 //
 // Як видно, що не зроблено: приватна вкладка відкриває список без входу.
 
+import { Navigate, Outlet } from 'react-router-dom'
+import { useSession } from '../store/session'
+
 export default function ProtectedRoute() {
-  return null
+  const token = useSession((s) => s.token)
+  return token ? <Outlet /> : <Navigate to="/login" replace />
 }

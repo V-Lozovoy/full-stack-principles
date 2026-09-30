@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCreateNote } from '../hooks/useNotes'
 
 /**
  * Заготовка для кроку 2 (маршрути): сторінка створення нотатки за адресою
@@ -17,8 +19,15 @@ export default function NewNotePage() {
   const [lat, setLat] = useState('48.4647')
   const [lng, setLng] = useState('35.0462')
 
+  const create = useCreateNote()
+  const navigate = useNavigate()
+  
   function submit(e: React.FormEvent) {
     e.preventDefault()
+    create.mutate(
+      { title, lat: Number(lat), lng: Number(lng) },
+      { onSuccess: () => navigate('/') },
+    )
     // TODO (після кроку 4): create.mutate({ title, lat: Number(lat), lng: Number(lng) }, ...)
   }
 

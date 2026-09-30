@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom'
+import { useSession } from '../store/session'
 
 /**
  * Заготовка для кроку 2 (маршрути): шапка, яка живе навколо <Outlet /> -
@@ -13,6 +14,14 @@ import { Link, Outlet } from 'react-router-dom'
  * побачити чужі дані).
  */
 export default function Layout() {
+  const email = useSession((s) => s.email)
+  const logout = useSession((s) => s.logout)
+
+  function onLogout() {
+    logout()
+    location.assign('/login')
+  }
+
   return (
     <main className="app">
       <header className="header">
@@ -24,7 +33,8 @@ export default function Layout() {
           <Link to="/">Мапа</Link>
           <Link to="/notes">Список</Link>
           <Link to="/notes/new">Створити</Link>
-          {/* TODO (після кроку 1): email зі стора і кнопка «Вийти» */}
+          {email && <span>{email}</span>}
+          <button type='button' className='link' onClick={onLogout}>Вийти</button>
         </nav>
       </header>
       <Outlet />

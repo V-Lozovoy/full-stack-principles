@@ -1,9 +1,10 @@
 import type { FieldError } from '../types'
+import { useSession } from '../store/session'
 
 const TOKEN_KEY = 'token'
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  return useSession.getState().token
 }
 
 export function setToken(token: string | null): void {
@@ -50,7 +51,7 @@ function parseDetails(raw: unknown): FieldError[] {
 function handleUnauthorized(): void {
   // На формі входу токена ще немає, і 401 там означає «невірний пароль».
   if (!getToken()) return
-  setToken(null)
+  useSession.getState().logout()
   if (location.pathname !== '/login') location.assign('/login')
 }
 

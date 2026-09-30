@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react'
-
-import { api } from '../api/client'
 import NoteCard from '../components/NoteCard'
-import type { Note, Page } from '../types'
+import type { Note } from '../types'
+import { useDeleteNote, useNotes, useUpdateNote } from '../hooks/useNotes'
 
 /**
  * Один запит — чотири екрани:
@@ -17,81 +15,62 @@ import type { Note, Page } from '../types'
  * виглядають однаково.
  */
 export default function NotesListPage() {
-  const [notes, setNotes] = useState<Note[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [pendingId, setPendingId] = useState<number | null>(null)
+  const { data, isPending, isError, error, refetch } = useNotes()
+  const update = useUpdateNote()
+  const remove = useDeleteNote()
 
-  async function load() {
-    setError(null)
-    try {
-      const page = await api<Page<Note>>('/notes')
-      setNotes(page.items)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не вдалося завантажити')
-    }
+  function onVisit(note: Note) {
+    if (update.isPending || remove.isPending) return // другий клік просто ігноруємо
+    update.reset()
+    remove.reset()
+    update.mutate({ id: note.id, visited: !note.visited })
   }
 
-  // [] у залежностях — рівно один раз після появи компонента.
-  // У dev спрацює двічі: це StrictMode, а не баг.
-  useEffect(() => {
-    void load()
-  }, [])
-
-  async function onVisit(note: Note) {
-    if (pendingId !== null) return // другий клік просто ігноруємо
-    setPendingId(note.id)
-    try {
-      await api(`/notes/${note.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ visited: !note.visited }),
-      })
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не вдалося оновити')
-    } finally {
-      setPendingId(null)
-    }
+  function onDelete(note: Note) {
+    if (update.isPending || remove.isPending) return
+    update.reset()
+    remove.reset()
+    remove.mutate(note.id)
   }
 
-  async function onDelete(note: Note) {
-    if (pendingId !== null) return
-    setPendingId(note.id)
-    try {
-      await api(`/notes/${note.id}`, { method: 'DELETE' })
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не вдалося видалити')
-    } finally {
-      setPendingId(null)
-    }
+  function isBusy(note: Note): boolean {
+    return (
+      (update.isPending && update.variables?.id === note.id) ||
+      (remove.isPending && remove.variables === note.id)
+    )
   }
 
-  if (error) {
+  if (isPending) return <p>Завантаження...</p>
+
+  if (isError) {
     return (
       <div className="card">
-        <p className="error" role="alert">
-          {error}
-        </p>
-        <button onClick={() => void load()}>Повторити</button>
+        <p className="error" role="alert">{error.message}</p>
+        <button onClick={() => void refetch()}>Повторити</button>
       </div>
     )
   }
 
-  if (notes === null) return <p>Завантаження…</p>
-  if (notes.length === 0) return <p>Поки що порожньо. Створіть першу нотатку.</p>
+  if (data.items.length === 0) return <p>Поки що порожньо</p>
+
+  const mutationError = update.error ?? remove.error
 
   return (
-    <div className="list">
-      {notes.map((note) => (
-        // key — стабільний id з даних, а не індекс масиву
-        <NoteCard
-          key={note.id}
-          note={note}
-          onVisit={onVisit}
-          onDelete={onDelete}
-          busy={pendingId === note.id}
-        />
-      ))}
-    </div>
+    <>
+      {mutationError && (
+        <p className="error" role="alert">{mutationError.message}</p>
+      )}
+      <div className="list">
+        {data.items.map((note) => (
+          <NoteCard
+            key={note.id}
+            note={note}
+            onVisit={onVisit}
+            onDelete={onDelete}
+            busy={isBusy(note)}
+          />
+        ))}
+      </div>
+    </>
   )
 }

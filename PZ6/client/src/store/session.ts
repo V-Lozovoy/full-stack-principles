@@ -1,5 +1,24 @@
 // TODO(1) [Пз6 · Л6, «store/session.ts: стор на Zustand»]: стор сесії на Zustand.
-//
+
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+interface SessionState {
+    token: string | null
+    email: string | null
+    login: (token: string, email: string) => void
+    logout: () => void
+}
+
+export const useSession = create<SessionState>()(
+    persist((set) => ({ 
+        token: null, 
+        email: null,
+        login: (token, email) => set ({ token, email }),
+        logout: () => set({ token: null, email: null })
+    }), { name: 'session' }),
+)
+
 //   import { create } from 'zustand'
 //   import { persist } from 'zustand/middleware'
 //
@@ -28,5 +47,3 @@
 // useSession.getState().token, а setToken(null) — на logout().
 //
 // Як видно, що не зроблено: після F5 вас викидає на форму входу.
-
-export {}

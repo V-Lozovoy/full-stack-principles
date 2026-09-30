@@ -1,13 +1,18 @@
 import { useState } from 'react'
 
-import { ApiError, api, setToken } from '../api/client'
+import { ApiError, api } from '../api/client'
+import { useSession } from '../store/session'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
   onSuccess: () => void
 }
 
-export default function LoginPage({ onSuccess }: Props) {
+export default function LoginPage() {
   // Керовані поля: значення живе у стані, а не в DOM.
+  const login = useSession((s) => s.login)
+  const navigate = useNavigate()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -35,8 +40,8 @@ export default function LoginPage({ onSuccess }: Props) {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       })
-      setToken(token)
-      onSuccess()
+      login(token, email)
+      navigate('/', {replace: true})
     } catch (err) {
       // Текст помилки — той, що прийшов у полі error від сервера,
       // а не «щось пішло не так».
@@ -48,6 +53,11 @@ export default function LoginPage({ onSuccess }: Props) {
   }
 
   return (
+  <main className="app">
+    <header className="header">
+      <h1>Нотатки на мапі</h1>
+    </header>
+
     <form className="card form" onSubmit={submit}>
       <h2>{mode === 'login' ? 'Вхід' : 'Реєстрація'}</h2>
 
@@ -95,5 +105,6 @@ export default function LoginPage({ onSuccess }: Props) {
         {mode === 'login' ? 'Немає акаунта? Зареєструватись' : 'Уже є акаунт? Увійти'}
       </button>
     </form>
+  </main>
   )
 }
