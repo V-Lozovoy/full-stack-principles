@@ -33,6 +33,19 @@ services:
       timeout: 3s
       retries: 10
 
+  server:
+    build: ./server
+    environment:
+      DATABASE_URL: postgresql://demo:demo@db:5432/notes?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret}
+    ports: ['3000:3000']
+    depends_on:
+      db: 
+        { condition: service_healthy }
+
+volumes:
+  db-data:
+
   # TODO: server — приблизно десять рядків:
   #   build: ./server
   #   environment:
@@ -54,6 +67,3 @@ services:
   #   docker compose -f ../ПЗ6/docker-compose.yml down
   #
   # Як видно, що не зроблено: docker compose up --build піднімає тільки db.
-
-volumes:
-  db-data:
