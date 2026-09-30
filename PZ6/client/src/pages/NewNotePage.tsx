@@ -24,6 +24,8 @@ export default function NewNotePage() {
   
   function submit(e: React.FormEvent) {
     e.preventDefault()
+    if (create.isPending) return
+
     create.mutate(
       { title, lat: Number(lat), lng: Number(lng) },
       { onSuccess: () => navigate('/') },
@@ -51,7 +53,7 @@ export default function NewNotePage() {
         </label>
       </div>
 
-      <button type="submit">Створити</button>
+      <button type="submit" disabled={create.isPending}>Створити</button>
     </form>
   )
 }
